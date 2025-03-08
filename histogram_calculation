@@ -1,0 +1,44 @@
+import cv2 
+import numpy as np 
+import matplotlib.pyplot as plt 
+def calculate_histogram(image): 
+histogram = cv2.calcHist([image], [0], None, [256], [0, 256]) 
+return histogram 
+def histogram_equalization(image): 
+return cv2.equalizeHist(image) 
+def clahe_equalization(image): 
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8)) 
+return clahe.apply(image) 
+# Load the grayscale image 
+image_path = "peacock.png" 
+image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE) 
+# Perform histogram equalization and CLAHE 
+equalized_image = histogram_equalization(image) 
+clahe_image = clahe_equalization(image) 
+# Compute histograms 
+original_hist = calculate_histogram(image) 
+equalized_hist = calculate_histogram(equalized_image)
+clahe_hist = calculate_histogram(clahe_image) 
+ 
+# Display images and histograms 
+titles = [ 
+    "Original Image", "Histogram of Original Image", 
+    "Histogram Equalized Image", "Histogram of Equalized Image", 
+    "CLAHE Image", "Histogram of CLAHE Image" 
+] 
+images = [image, original_hist, equalized_image, equalized_hist, clahe_image, clahe_hist] 
+ 
+plt.figure(figsize=(12, 8)) 
+for i in range(len(images)): 
+    plt.subplot(3, 2, i + 1) 
+    if i % 2 == 0:  # Display images 
+        plt.imshow(images[i], cmap="gray") 
+        plt.title(titles[i]) 
+        plt.axis("off") 
+    else:  # Display histograms 
+        plt.plot(images[i]) 
+        plt.title(titles[i]) 
+        plt.xlabel("Pixel Intensity") 
+        plt.ylabel("Frequency") 
+plt.tight_layout() 
+plt.show()

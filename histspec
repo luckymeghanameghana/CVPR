@@ -1,60 +1,28 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-
 def hist_match(source, reference):
-    matched_channels = []
-    
-    for i in range(3):  
-        src_hist, _ = np.histogram(source[:, :, i], bins=256, range=(0, 256))
-        ref_hist, _ = np.histogram(reference[:, :, i], bins=256, range=(0, 256))
-
-        src_cdf = np.cumsum(src_hist).astype(np.float32)
-        ref_cdf = np.cumsum(ref_hist).astype(np.float32)
-
-        src_cdf /= src_cdf[-1] 
-        ref_cdf /= ref_cdf[-1]  
-        lut = np.interp(src_cdf, ref_cdf, np.arange(256)).astype(np.uint8)
-        matched_channels.append(cv2.LUT(source[:, :, i], lut))
-    return cv2.merge(matched_channels)
-
-def plot_histogram(image, title):
-    colors = ('r', 'g', 'b')
-    plt.figure(figsize=(8, 4))
-    for i, color in enumerate(colors):
-        hist = cv2.calcHist([image], [i], None, [256], [0, 256])
-        plt.plot(hist, color=color, label=f"{color.upper()} Channel")
-    plt.title(title)
-    plt.xlabel("Pixel Intensity")
-    plt.ylabel("Frequency")
-    plt.legend()
-    plt.grid()
-source_image = cv2.imread('img.jpg')  
-reference_image = cv2.imread('img.jpeg')  
-
-source_image = cv2.cvtColor(source_image, cv2.COLOR_BGR2RGB)
-reference_image = cv2.cvtColor(reference_image, cv2.COLOR_BGR2RGB)
-
+ src_hist, bins = np.histogram(source.flatten(), 256, [0, 256])
+ ref_hist, _ = np.histogram(reference.flatten(), 256, [0, 256])
+ src_cdf = np.cumsum(src_hist) / src_hist.sum()
+ ref_cdf = np.cumsum(ref_hist) / ref_hist.sum()
+ mapping = np.interp(src_cdf, ref_cdf, np.arange(256))
+ matched_image = np.interp(source.flatten(), np.arange(256),
+mapping).reshape(source.shape)
+ return np.uint8(matched_image)
+source_image = cv2.imread("src.jpg")
+reference_image = cv2.imread("ref.jpg")
+#source_image_gray = cv2.cvtColor(source_image, cv2.COLOR_BGR2GRAY)
+#reference_image_gray = cv2.cvtColor(reference_image, cv2.COLOR_BGR2GRAY)
 result_image = hist_match(source_image, reference_image)
-
-plt.figure(figsize=(10, 10))
-
+plt.figure(figsize=(10, 5))
 plt.subplot(1, 3, 1)
-plt.title('Source Image')
-plt.imshow(source_image)
-plt.axis("off")
-
+plt.title('Source Image (Grayscale)')
+plt.imshow(source_image, cmap='gray')
 plt.subplot(1, 3, 2)
-plt.title('Reference Image')
-plt.imshow(reference_image)
-plt.axis("off")
-
+plt.title('Reference Image (Grayscale)')
+plt.imshow(reference_image, cmap='gray')
 plt.subplot(1, 3, 3)
 plt.title('Matched Image')
-plt.imshow(result_image)
-plt.axis("off")
-
-plt.show()
-plot_histogram(source_image, "Histogram of Source Image")
-plot_histogram(result_image, "Histogram of Matched Image")
+plt.imshow(result_image, cmap='gray')
 plt.show()
